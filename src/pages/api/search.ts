@@ -78,7 +78,7 @@ const functionCommands: FunctionCommand[] = [
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     const { q: query } = req.query;
-    let currCmd: string = '';
+    let currCmd = '';
 
     if (Array.isArray(query)) {
       currCmd = query.join(' ');
