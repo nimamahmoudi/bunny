@@ -119,6 +119,11 @@
     "targetTemplate": "https://www.google.com/finance/quote/T:TSE",
     "description": "Opens TELUS's stock price."
   },
+  "YahooFinance": {
+    "pattern": "^(yf)\\s+(.*)$",
+    "targetTemplate": "https://finance.yahoo.com/quote/$1",
+    "description": "Redirects to Yahoo Finance for the provided symbol or opens the main page if no symbol is specified."
+  },
   "DEFAULT": {
     "pattern": "^()(.*)$",
     "targetTemplate": "https://google.com/search?q=$1",
