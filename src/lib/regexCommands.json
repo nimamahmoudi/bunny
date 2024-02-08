@@ -1,0 +1,149 @@
+{
+  "GoogleSearch": {
+    "pattern": "^(g|goog|google)\\s(.*)$",
+    "targetTemplate": "https://google.com/search?q=$1",
+    "description": "Redirects to Google search with the provided query.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "FacebookSearch": {
+    "pattern": "^(fb)\\s(.*)$",
+    "targetTemplate": "https://www.facebook.com/search/top/?q=$1",
+    "description": "Redirects to Facebook search.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "Telegram": {
+    "pattern": "^(tel)$",
+    "targetTemplate": "https://web.telegram.org/",
+    "description": "Opens Telegram Web.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "NimaDev": {
+    "pattern": "^(nima)$",
+    "targetTemplate": "https://nima-dev.com/",
+    "description": "Opens Nima's personal website.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "Gmail": {
+    "pattern": "^(gm)$",
+    "targetTemplate": "https://mail.google.com/",
+    "description": "Opens Gmail.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "GoogleDrive": {
+    "pattern": "^(gd)$",
+    "targetTemplate": "https://drive.google.com/",
+    "description": "Opens Google Drive.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "YouTubeSearch": {
+    "pattern": "^(yt)\\s(.*)$",
+    "targetTemplate": "https://www.youtube.com/results?search_query=$1",
+    "description": "Redirects to YouTube search.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "YouTubeLanding": {
+    "pattern": "^(yt)$",
+    "targetTemplate": "https://www.youtube.com/",
+    "description": "Opens YouTube main page.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "RedditSearch": {
+    "pattern": "^(r)\\s(.*)$",
+    "targetTemplate": "https://www.reddit.com/search/?q=$1",
+    "description": "Redirects to Reddit search.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "RedditLanding": {
+    "pattern": "^(r)$",
+    "targetTemplate": "https://www.reddit.com/",
+    "description": "Opens Reddit main page.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "TwitterSearch": {
+    "pattern": "^(tw)\\s(.*)$",
+    "targetTemplate": "https://twitter.com/search?q=$1",
+    "description": "Redirects to Twitter search.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "TwitterLanding": {
+    "pattern": "^(tw)$",
+    "targetTemplate": "https://twitter.com/",
+    "description": "Opens Twitter main page.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "Netflix": {
+    "pattern": "^(n)$",
+    "targetTemplate": "https://www.netflix.com/",
+    "description": "Opens Netflix.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "AmazonPrimeVideo": {
+    "pattern": "^(pv)$",
+    "targetTemplate": "https://www.primevideo.com/",
+    "description": "Opens Amazon Prime Video.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "VSCode": {
+    "pattern": "^(vs)$",
+    "targetTemplate": "vscode://",
+    "description": "Opens Visual Studio Code.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "GoogleCalendar": {
+    "pattern": "^(cal)$",
+    "targetTemplate": "https://calendar.google.com/",
+    "description": "Opens Google Calendar.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "GitHubSearch": {
+    "pattern": "^(github|gh)\\s(.*)$",
+    "targetTemplate": "https://github.com/search?q=$1",
+    "description": "Redirects to GitHub search.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "GitHubLanding": {
+    "pattern": "^(github|gh)$",
+    "targetTemplate": "https://github.com/",
+    "description": "Opens GitHub main page.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "Wealthsimple": {
+    "pattern": "^ws$",
+    "targetTemplate": "https://www.wealthsimple.com/",
+    "description": "Opens Wealthsimple main page.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "MetaStock": {
+    "pattern": "^\\$$",
+    "targetTemplate": "https://www.google.com/finance/quote/META:NASDAQ",
+    "description": "Opens Meta's stock price.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  },
+  "DEFAULT": {
+    "pattern": "^()(.*)$",
+    "targetTemplate": "https://google.com/search?q=$1",
+    "description": "Uses Google search as the default search engine.",
+    "encodeForSearch": false,
+    "encodeURI": false
+  }
+}
