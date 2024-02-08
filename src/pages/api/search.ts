@@ -11,8 +11,6 @@ type RegexCommandRaw = {
   pattern: string;
   targetTemplate: string;
   description: string;
-  encodeForSearch: boolean;
-  encodeURI: boolean;
 };
 
 type RegexCommand = {
@@ -42,21 +40,22 @@ const regexCommands: RegexCommand[] = Object.entries(regexCommandsData).map(([na
   name,
   matcher: new RegExp(cmd.pattern),
   target: (matches: RegExpMatchArray) => {
-    // Ensure matches[2] is defined before using it
-    let searchTerm = matches[2] ?? '';
-    if (cmd.encodeURI) {
-      searchTerm = encodeForSearch(searchTerm);
-    }
-    if (cmd.encodeURI) {
-      searchTerm = encodeURIComponent(searchTerm);
-    }
-    return cmd.targetTemplate.replace('$1', searchTerm);
+    // Use the captured groups from the regex match to replace placeholders in the targetTemplate
+    let target = cmd.targetTemplate;
+    matches.forEach((match, index) => {
+      // Skip the entire match and the command and start with the first capturing group
+      if (index < 2) return;
+      let replacement = match ?? '';
+      console.log('replacing', `\$${index-1}`, '==>', replacement)
+      target = target.replace(new RegExp(`\\$${index-1}`, 'g'), replacement);
+    });
+    return target;
   },
 })).sort( // sort in a way that DEFAULT is always last
   (a: RegexCommand, b: RegexCommand) => {
     if (a.name === "DEFAULT") return 1;
     if (b.name === "DEFAULT") return -1;
-    return 0
+    return 0;
   }
 );
 
@@ -65,8 +64,8 @@ const functionCommands: FunctionCommand[] = [
     matcher: /^(ls|list)$/,
     action: (req, res, matches) => {
       const commandsList = [
-        ...regexCommands.map(cmd => `${getCommandFromMatcher(cmd)}: ${cmd.description}`),
-        ...functionCommands.map(cmd => `${getCommandFromMatcher(cmd)}: ${cmd.description}`),
+        ...regexCommands.map(cmd => `${getCommandFromMatcher(cmd)} : ${cmd.matcher.toString()} : ${cmd.description}`),
+        ...functionCommands.map(cmd => `${getCommandFromMatcher(cmd)} : ${cmd.matcher.toString()} : ${cmd.description}`),
       ].join('\n');
       res.send(`Available commands:\n${commandsList}`);
     },
@@ -99,7 +98,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       if (matches) {
         const targetUrl = cmd.target(matches);
         return res.redirect(307, targetUrl);
-        // return res.send(targetUrl);
       }
     }
 
