@@ -46,8 +46,8 @@ const regexCommands: RegexCommand[] = Object.entries(regexCommandsData).map(([na
       // Skip the entire match and the command and start with the first capturing group
       if (index < 2) return;
       const replacement = match ?? '';
-      console.log('replacing', `\$${index-1}`, '==>', replacement)
-      target = target.replace(new RegExp(`\\$${index-1}`, 'g'), replacement);
+      console.log('replacing', `\$${index - 1}`, '==>', replacement)
+      target = target.replace(new RegExp(`\\$${index - 1}`, 'g'), encodeURIComponent(replacement));
     });
     return target;
   },
@@ -102,7 +102,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     // catch all in case DEFAULT with proper config didn't exist
-    return res.redirect(307, `https://google.com/search?q=${encodeURIComponent(encodeForSearch(currCmd))}`);
+    return res.redirect(307, `https://google.com/search?q=${encodeURIComponent(currCmd)}`);
   } else {
     res.setHeader('Allow', ['GET']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
