@@ -10,7 +10,7 @@
     "description": "Redirects to Facebook search."
   },
   "Telegram": {
-    "pattern": "^(tel)$",
+    "pattern": "^(t|tel|telegram)$",
     "targetTemplate": "https://web.telegram.org/",
     "description": "Opens Telegram Web."
   },
@@ -75,7 +75,7 @@
     "description": "Opens Visual Studio Code."
   },
   "GoogleCalendar": {
-    "pattern": "^(cal)$",
+    "pattern": "^(gcal|cal)$",
     "targetTemplate": "https://calendar.google.com/",
     "description": "Opens Google Calendar."
   },
@@ -101,7 +101,7 @@
   },
   "Wealthica": {
     "pattern": "^w$",
-    "targetTemplate": "https://www.wealthsimple.com/",
+    "targetTemplate": "https://wealthica.com/",
     "description": "Opens Wealthsimple main page."
   },
   "MetaStock": {
