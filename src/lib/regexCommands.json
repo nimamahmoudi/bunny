@@ -99,6 +99,11 @@
     "targetTemplate": "https://www.wealthsimple.com/",
     "description": "Opens Wealthsimple main page."
   },
+  "Wealthica": {
+    "pattern": "^w$",
+    "targetTemplate": "https://www.wealthsimple.com/",
+    "description": "Opens Wealthsimple main page."
+  },
   "MetaStock": {
     "pattern": "^\\$$",
     "targetTemplate": "https://www.google.com/finance/quote/META:NASDAQ",
