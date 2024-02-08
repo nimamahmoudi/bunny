@@ -49,7 +49,7 @@ To make Bunny even more accessible, you can set it as your default search engine
 3. Under the "Other Search Engines" section, add a new search engine with the following details:
     - **Search Engine:** Bunny (or any name you prefer)
     - **Keyword:** bunny (or a shortcut of your choice)
-    - **URL with %s in place of query:** `https://bunny.nima-dev.com/search?q=%s` (replace `bunny.nima-dev.com` with your actual domain where Bunny is hosted)
+    - **URL with %s in place of query:** `https://bunny.nima-dev.com/api/search?q=%s` (replace `bunny.nima-dev.com` with your actual domain where Bunny is hosted)
 
 4. Find the newly added Bunny search engine in the list and click the three dots next to it, then select `Make Default`.
 
