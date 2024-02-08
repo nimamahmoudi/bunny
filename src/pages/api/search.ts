@@ -43,7 +43,7 @@ const regexCommands: RegexCommand[] = Object.entries(regexCommandsData).map(([na
   matcher: new RegExp(cmd.pattern),
   target: (matches: RegExpMatchArray) => {
     // Ensure matches[2] is defined before using it
-    let searchTerm = matches[2] !== undefined ? matches[2] : '';
+    let searchTerm = matches[2] ?? '';
     if (cmd.encodeURI) {
       searchTerm = encodeForSearch(searchTerm);
     }

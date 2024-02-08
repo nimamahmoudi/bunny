@@ -38,6 +38,24 @@ Below is a list of currently supported commands and their functions:
 
 Feel free to contribute by adding more commands or suggesting features that would make Bunny more useful for you!
 
+## Setup
+
+To make Bunny even more accessible, you can set it as your default search engine in Chrome:
+
+1. Open Chrome and click the three dots in the upper-right corner to access the menu. Select `Settings` and scroll down to the `Search Engine` section.
+
+2. Click `Manage Search Engines`.
+
+3. Under the "Other Search Engines" section, add a new search engine with the following details:
+    - **Search Engine:** Bunny (or any name you prefer)
+    - **Keyword:** bunny (or a shortcut of your choice)
+    - **URL with %s in place of query:** `https://bunny.nima-dev.com/search?q=%s` (replace `bunny.nima-dev.com` with your actual domain where Bunny is hosted)
+
+4. Find the newly added Bunny search engine in the list and click the three dots next to it, then select `Make Default`.
+
+This will allow you to use Bunny commands directly from your address bar by typing your chosen keyword followed by a space and then your command.
+
+
 ## Contributing
 
 We welcome contributions to Bunny! If you have an idea for a new command or feature, or if you've found a bug, please open an issue or submit a pull request.
