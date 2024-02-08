@@ -95,19 +95,29 @@
     "description": "Opens GitHub main page."
   },
   "Wealthsimple": {
-    "pattern": "^ws$",
-    "targetTemplate": "https://www.wealthsimple.com/",
+    "pattern": "^(ws)$",
+    "targetTemplate": "https://my.wealthsimple.com/app/login?locale=en-ca",
     "description": "Opens Wealthsimple main page."
   },
   "Wealthica": {
-    "pattern": "^w$",
-    "targetTemplate": "https://wealthica.com/",
-    "description": "Opens Wealthsimple main page."
+    "pattern": "^(w)$",
+    "targetTemplate": "https://app.wealthica.com/login?redirect=%2Fdashboard",
+    "description": "Opens Wealthica main page."
+  },
+  "Bunny": {
+    "pattern": "^(bunny)$",
+    "targetTemplate": "https://github.com/nimamahmoudi/bunny",
+    "description": "Opens Bunny's github repository."
   },
   "MetaStock": {
-    "pattern": "^\\$$",
+    "pattern": "^(\\$|meta)$",
     "targetTemplate": "https://www.google.com/finance/quote/META:NASDAQ",
     "description": "Opens Meta's stock price."
+  },
+  "TELUSStock": {
+    "pattern": "^(telus)$",
+    "targetTemplate": "https://www.google.com/finance/quote/T:TSE",
+    "description": "Opens TELUS's stock price."
   },
   "DEFAULT": {
     "pattern": "^()(.*)$",

@@ -64,8 +64,8 @@ const functionCommands: FunctionCommand[] = [
     matcher: /^(ls|list)$/,
     action: (req, res, matches) => {
       const commandsList = [
-        ...regexCommands.map(cmd => `${getCommandFromMatcher(cmd)} : ${cmd.matcher.toString()} : ${cmd.description}`),
         ...functionCommands.map(cmd => `${getCommandFromMatcher(cmd)} : ${cmd.matcher.toString()} : ${cmd.description}`),
+        ...regexCommands.map(cmd => `${getCommandFromMatcher(cmd)} : ${cmd.matcher.toString()} : ${cmd.description}`),
       ].join('\n');
       res.send(`Available commands:\n${commandsList}`);
     },
