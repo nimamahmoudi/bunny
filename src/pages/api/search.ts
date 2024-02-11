@@ -46,7 +46,7 @@ const regexCommands: RegexCommand[] = Object.entries(regexCommandsData).map(([na
       // Skip the entire match and the command and start with the first capturing group
       if (index < 2) return;
       const replacement = match ?? '';
-      console.log('replacing', `\$${index - 1}`, '==>', replacement)
+      // console.log('replacing', `\$${index - 1}`, '==>', replacement)
       target = target.replace(new RegExp(`\\$${index - 1}`, 'g'), encodeURIComponent(replacement));
     });
     return target;
