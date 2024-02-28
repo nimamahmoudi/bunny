@@ -124,6 +124,11 @@
     "targetTemplate": "https://finance.yahoo.com/quote/$1",
     "description": "Redirects to Yahoo Finance for the provided symbol or opens the main page if no symbol is specified."
   },
+  "PerPlexityAI": {
+    "pattern": "^(qq)\\s+(.*)$",
+    "targetTemplate": "https://www.perplexity.ai/search?q=$1&focus=internet",
+    "description": "Redirects to perplexity and searches the specified term."
+  },
   "DEFAULT": {
     "pattern": "^()(.*)$",
     "targetTemplate": "https://google.com/search?q=$1",
