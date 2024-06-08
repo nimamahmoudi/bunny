@@ -130,17 +130,17 @@
     "description": "Redirects to Yahoo Finance Home Page."
   },
   "PerPlexityAI": {
-    "pattern": "^(ww)\\s*(.*)$",
+    "pattern": "^\\b(ww)\\b\\s*(.*)$",
     "targetTemplate": "https://www.perplexity.ai/search?q=$1&focus=internet",
     "description": "Redirects to perplexity and searches the specified term."
   },
   "ChatGpt": {
-    "pattern": "^(qq)\\s*(.*)$",
+    "pattern": "^\\b(qq)\\b\\s*(.*)$",
     "targetTemplate": " https://chat.openai.com/?q=$1&model=gpt-4",
     "description": "Redirects to chatgpt and queries the specified term."
   },
   "OpenWebUi": {
-    "pattern": "^(aa)\\s*(.*)$",
+    "pattern": "^\\b(aa)\\b\\s*(.*)$",
     "targetTemplate": " https://open-webui.nima-ai.com/?q=$1",
     "description": "Redirects to open-webui and queries the specified term."
   },
