@@ -139,6 +139,11 @@
     "targetTemplate": " https://chat.openai.com/?q=$1&model=gpt-4o",
     "description": "Redirects to chatgpt and queries the specified term."
   },
+  "Claude": {
+    "pattern": "^\\b(cc)\\b\\s*(.*)$",
+    "targetTemplate": "https://claude.ai/new?q=$1",
+    "description": "Redirects to Claude and queries the specified term."
+  },
   "OpenWebUi": {
     "pattern": "^\\b(aa)\\b\\s*(.*)$",
     "targetTemplate": " https://open-webui.nima-ai.com/?q=$1",
