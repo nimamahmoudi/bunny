@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import regexCommandsData from "@/lib/regexCommands.json";
 import { toGoogleFinanceSymbol } from "@/lib/googleFinance";
+import { evaluateCalc, type CalcResult } from "@/lib/calc";
 
 /**
  * Autocomplete for Bunny.
@@ -37,6 +38,28 @@ import { toGoogleFinanceSymbol } from "@/lib/googleFinance";
  * fetched for the part after the command and the command prefix is
  * put back on (`g weather toronto`, `yt cats meowing`). Typing just
  * `g` / `yt` offers the matching commands themselves.
+ *
+ * Google fallback: a query that looks like a command is often really
+ * a Google search, so a `g …` option is always within reach:
+ * - a command that takes a query (e.g. `yt cats`) gets
+ *   `g <everything typed>` as the second suggestion, after the
+ *   first suggestion from that command's own provider. `g` / `goog`
+ *   themselves are already Google, so they get no fallback.
+ * - a command that takes NO query, with extra text after it (e.g.
+ *   `ws protocol` — only a bare `ws` opens Wealthsimple), is very
+ *   likely a Google search for the whole thing: `g <everything
+ *   typed>` goes first, followed by Google's suggestions for it
+ *   (all `g …`), with the landing command itself last so it stays
+ *   reachable.
+ *
+ * Calculator: a plain arithmetic expression (e.g. `100*.02`) is
+ * still a Google search by default — the first suggestion is
+ * `g <expression>`, and pressing Enter with nothing picked searches
+ * Google too. The second suggestion is the built-in calculator
+ * (`calc <expression> = <result>`); picking it opens /calc and
+ * copies the answer to the clipboard. Typing the calculator
+ * explicitly (`calc 100*.02`) flips the order: the `calc …` answer
+ * goes first, then the Google search. See src/lib/calc.ts.
  */
 
 type RegexCommandRaw = {
@@ -224,6 +247,35 @@ async function fetchGoogleFinanceSuggestions(
   return symbols.slice(0, 5);
 }
 
+// Suggestions for a calculation. The Google search for the
+// expression and the calculator answer are always the first two,
+// in an order that depends on how the calculator was reached:
+// - bare expression ("100*.02"): Google first, calculator second
+//   (Enter with nothing picked searches Google too).
+// - explicit "calc <expression>": calculator first, Google second.
+// The rest are Google's own suggestions for the expression.
+async function calcSuggestions(
+  calc: CalcResult,
+  answerFirst: boolean
+): Promise<string[]> {
+  const answer = `calc ${calc.expression} = ${calc.formatted}`;
+  const google = `g ${calc.expression}`;
+  const out = answerFirst ? [answer, google] : [google, answer];
+  const googleSuggestions = await fetchGoogleSuggestions(calc.expression);
+  for (const s of googleSuggestions) {
+    // Google Suggest completes an expression with "= <result>"
+    // ("= 2"); the answer is already in the list, so those add
+    // nothing but noise.
+    if (s.trim().startsWith("=")) continue;
+    const candidate = `g ${s}`;
+    if (candidate !== google && !out.includes(candidate)) {
+      out.push(candidate);
+    }
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
 async function fetchSuggestionsForCommand(
   token: string,
   rest: string
@@ -270,6 +322,31 @@ export default async function handler(
   res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300");
 
   const trimmed = q.trimStart();
+
+  // "calc <expression>": the calculator was asked for explicitly,
+  // so its answer goes first, then the Google search.
+  const explicitCalc = trimmed.match(/^calc\s+(.+)$/i);
+  const explicitRest = explicitCalc?.[1];
+  if (explicitRest) {
+    const calc = evaluateCalc(explicitRest);
+    if (calc) {
+      return res
+        .status(200)
+        .json([q, await calcSuggestions(calc, true)]);
+    }
+    // Not a calculation (e.g. "calc taxes"): fall through to the
+    // normal Google suggestions below.
+  }
+
+  // Calculator: a bare expression (e.g. "100*.02"). The Google
+  // search goes first — Enter with nothing picked searches Google
+  // too — and the built-in calculator ("calc …", which opens /calc
+  // and copies the answer) is the second suggestion.
+  const calc = evaluateCalc(trimmed);
+  if (calc) {
+    return res.status(200).json([q, await calcSuggestions(calc, false)]);
+  }
+
   const spaceIndex = trimmed.search(/\s/);
 
   // No space yet: offer matching command names, e.g. "g" -> "g ", "goog ".
@@ -296,10 +373,38 @@ export default async function handler(
   const command = commandTokens.get(first.toLowerCase());
   if (command?.takesQuery && rest) {
     const suggestions = await fetchSuggestionsForCommand(first, rest);
-    return res.status(200).json([
-      q,
-      suggestions.map((s) => `${first} ${s}`),
-    ]);
+    const prefixed = suggestions.map((s) => `${first} ${s}`);
+    // Second option: Google-search the whole thing as typed, in
+    // case the command-looking input was really a Google search.
+    // `g` / `goog` are already Google, so they get no fallback.
+    const tokenLower = first.toLowerCase();
+    if (tokenLower !== "g" && tokenLower !== "goog") {
+      const fallback = `g ${trimmed}`;
+      if (!prefixed.includes(fallback)) {
+        prefixed.splice(1, 0, fallback);
+      }
+    }
+    return res.status(200).json([q, prefixed.slice(0, 8)]);
+  }
+
+  // "<command> <rest>" where the command takes NO query (e.g. "ws
+  // protocol"): the whole thing is very likely a Google search, not
+  // the landing page, so the Google search for exactly what was
+  // typed goes first, followed by Google's suggestions for it (all
+  // "g …"), with the landing command itself last so it stays
+  // reachable.
+  if (command && rest) {
+    const googleSuggestions = await fetchGoogleSuggestions(trimmed);
+    const out = [`g ${trimmed}`];
+    for (const s of googleSuggestions) {
+      const candidate = `g ${s}`;
+      if (candidate !== out[0] && !out.includes(candidate)) {
+        out.push(candidate);
+      }
+      if (out.length >= 7) break;
+    }
+    out.push(first.toLowerCase());
+    return res.status(200).json([q, out.slice(0, 8)]);
   }
 
   const suggestions = await fetchGoogleSuggestions(trimmed);

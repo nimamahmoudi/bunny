@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import regexCommandsData from '@/lib/regexCommands.json'; // Adjust the path as necessary
 import { toGoogleFinanceSymbol } from '@/lib/googleFinance';
+import { evaluateCalc } from '@/lib/calc';
 
 type FunctionCommand = {
   matcher: RegExp;
@@ -155,6 +156,31 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       currCmd = query;
     }
 
+
+    // Calculator: only the explicit "calc" form opens the
+    // calculator page. A bare arithmetic expression (e.g. "100*.02")
+    // is NOT hijacked — it falls through to Google search, so
+    // typing a calculation and pressing Enter searches Google.
+    // "calc <expression>" (or a picked "calc <expr> = <result>"
+    // suggestion) opens /calc and asks it to copy the answer to
+    // the clipboard; a bare "calc" opens the calculator page.
+    const trimmedCmd = currCmd.trim();
+    if (/^calc$/i.test(trimmedCmd)) {
+      return res.redirect(307, "/calc");
+    }
+    const calcMatch = trimmedCmd.match(/^calc\s+(.+)$/i);
+    const calcRest = calcMatch?.[1];
+    if (calcRest) {
+      const calc = evaluateCalc(calcRest);
+      if (calc) {
+        return res.redirect(
+          307,
+          `/calc?expr=${encodeURIComponent(calc.expression)}&copy=1`
+        );
+      }
+      // Not a calculation (e.g. "calc taxes"): fall through to
+      // Google search for it.
+    }
 
     for (const cmd of functionCommands) {
       const matches = currCmd.match(cmd.matcher);

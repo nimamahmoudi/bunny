@@ -1,6 +1,8 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { evaluateCalc } from "@/lib/calc";
+import { copyTextToClipboard } from "@/lib/clipboard";
 
 const QUICK_COMMANDS = [
   { token: "g ", label: "Google" },
@@ -133,6 +135,20 @@ export default function Home() {
   const go = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed) return;
+    // A picked "calc <expr> = <result>" suggestion (or a typed
+    // "calc <expr>"): copy the answer now, in this click / Enter
+    // gesture — that is when the browser allows clipboard writes —
+    // then open the calculator page, which tries again on arrival.
+    // Anything else, including a bare calculation, just goes to
+    // /api/search (Google).
+    const calcMatch = trimmed.match(/^calc\s+(.+)$/i);
+    const calcRest = calcMatch?.[1];
+    if (calcRest) {
+      const calc = evaluateCalc(calcRest);
+      if (calc) {
+        void copyTextToClipboard(calc.formatted);
+      }
+    }
     window.location.href = `/api/search?q=${encodeURIComponent(trimmed)}`;
   };
 
@@ -212,7 +228,8 @@ export default function Home() {
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-lg text-white/70">
             Type a shortcut, go straight there. Search Google, YouTube,
-            GitHub and Google Finance — with suggestions as you type.
+            GitHub and Google Finance — with suggestions as you type — or
+            type calc 100*.02 to calculate and copy the answer.
           </p>
 
           <form

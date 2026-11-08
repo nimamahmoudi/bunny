@@ -156,7 +156,8 @@ export default function Commands() {
           <p className="mt-3 max-w-xl text-white/70">
             Type a shortcut in the address bar or on the homepage, then a
             space and your query. Anything with no shortcut goes to Google
-            search.
+            search. Type calc 100*.02 and Bunny calculates it and copies
+            the answer to your clipboard.
           </p>
 
           <input
