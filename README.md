@@ -77,7 +77,22 @@ Some commands have no public, unauthenticated suggest API, so they fall back to 
 
 Chrome's manual "add search engine" screen has no field for a suggestion URL, so after deploying this, re-add Bunny for the omnibox suggestions to take effect: in `chrome://settings/searchEngines` remove the old Bunny entry, visit https://bunny.nima-dev.com (Chrome should pick it up from the OpenSearch file), then set it as default again. The homepage search box works regardless, with no browser setup.
 
+A query that looks like a command is often really a Google search, so a `g …` option is always within reach:
+
+- A command that takes a query (e.g. `yt cats`) gets `g <everything typed>` as the second suggestion, after the first suggestion from that command's own provider. `g` / `goog` themselves are already Google, so they get no fallback.
+- A command that takes no query, with extra text after it (e.g. `ws protocol` — only a bare `ws` opens Wealthsimple), is very likely a Google search for the whole thing: `g <everything typed>` goes first, followed by Google's suggestions for it (all `g …`), with the landing command itself last so it stays reachable.
+
 Note: suggestions send each keystroke to the suggestion provider for the command you typed (Google for plain/`g` searches, YouTube for `yt`, GitHub for `gh`, Yahoo Finance for `yf` and `gf`).
+
+## Calculator
+
+A bare calculation stays a Google search: type `100*.02` and press Enter (or pick the first suggestion, `g 100*.02`) and you get Google's calculator, as before. The built-in calculator is the second suggestion instead — `calc 100*.02 = 2` — for the quick cases where you just want the answer in your clipboard.
+
+- Picking `calc <expression> = <result>` (or typing `calc <expression>` yourself) opens `/calc` and copies the answer to your clipboard, so you can paste it straight away. Typing the calculator explicitly (`calc 100*.02`) puts its answer first, then the Google search.
+- `calc 100*.02` → `2`; `calc (250 + 40) / 3` → `96.6666666667`; `calc 2^10` → `1024`; `calc 200*15%` → `30`. A bare `calc` opens the calculator page.
+- Supports `+ - * / % ^` and parentheses, decimal numbers, `x` / `×` for multiply, `÷` for divide, `**` for power. `%` is a postfix percent: `50%` is `0.5`, so `200*15%` is `30`.
+- The evaluator is a small parser in `src/lib/calc.ts` — no `eval()`, so an expression can only ever be arithmetic. A date like `2026-11-08` and a bare number like `42` are not treated as calculations.
+- The copy happens in the click / Enter gesture where possible (picking the suggestion on the homepage copies immediately). `/calc` also tries to copy on arrival when asked (`?copy=1`); browsers only allow clipboard writes during a user gesture, so if that attempt is blocked the page says so, offers a Copy button, and retries on your first click or keypress there. The `/calc` page keeps evaluating as you type, so you can carry on calculating from there, and links out to the Google search for the expression if you want that instead.
 
 ## Contributing
 
