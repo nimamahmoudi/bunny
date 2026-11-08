@@ -11,15 +11,23 @@ import regexCommandsData from "@/lib/regexCommands.json";
  * registered via /opensearch.xml. The homepage search box uses the
  * same endpoint.
  *
- * Source: Google Suggest (client=firefox, no API key). Bunny's default
- * search already redirects to Google, so this sends keystrokes to the
- * same place a plain Google search would — no new provider.
+ * Per-command suggestions, not just Google for everything:
+ * - plain query, or `g` / `goog` / `google` -> Google Suggest
+ * - `yt` -> YouTube suggestions (Google Suggest with ds=yt)
+ * - `gh` / `github` -> GitHub repo search (full names, e.g. facebook/react)
+ * - `yf` -> Yahoo Finance symbol search (e.g. META, AAPL)
+ * - everything else (`fb`, `r`, `tw`, `ww`, `qq`, `cc`, `aa`) -> Google
+ *   as a fallback. Those platforms have no public, unauthenticated
+ *   suggest API: X's typeahead returns 403 without auth, Reddit
+ *   blocks datacenter IPs, Facebook has none. No keys are used
+ *   anywhere here — this is a public repo, so a provider that needs
+ *   a key is not an option.
  *
  * Command-aware: if the query starts with a known Bunny command that
  * takes a query (e.g. `g weather tor`, `yt cats`), suggestions are
  * fetched for the part after the command and the command prefix is
- * put back on (`g weather toronto`). Typing just `g` / `yt` offers
- * the matching commands themselves.
+ * put back on (`g weather toronto`, `yt cats meowing`). Typing just
+ * `g` / `yt` offers the matching commands themselves.
  */
 
 type RegexCommandRaw = {
@@ -50,13 +58,30 @@ for (const cmd of Object.values(regexCommandsData) as RegexCommandRaw[]) {
   }
 }
 
-async function fetchGoogleSuggestions(query: string): Promise<string[]> {
+// Which provider serves each query-taking command. Anything not listed
+// here falls back to Google (see the header comment for why).
+type SuggestProvider = "google" | "youtube" | "github" | "yahoo";
+const suggestProviders: Record<string, SuggestProvider> = {
+  g: "google",
+  goog: "google",
+  google: "google",
+  yt: "youtube",
+  gh: "github",
+  github: "github",
+  yf: "yahoo",
+};
+
+async function fetchGoogleSuggestions(
+  query: string,
+  ds?: string
+): Promise<string[]> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 2500);
   try {
     const url =
       "https://suggestqueries.google.com/complete/search?client=firefox&hl=en&gl=ca&q=" +
-      encodeURIComponent(query);
+      encodeURIComponent(query) +
+      (ds ? `&ds=${ds}` : "");
     const res = await fetch(url, {
       signal: controller.signal,
       headers: { "User-Agent": "Mozilla/5.0 (Bunny)" },
@@ -74,6 +99,96 @@ async function fetchGoogleSuggestions(query: string): Promise<string[]> {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+// GitHub repo search, unauthenticated, no key. Returns repo full names
+// ("facebook/react"). Returns null on failure / rate limit so the
+// caller can fall back to Google instead of showing nothing.
+async function fetchGitHubSuggestions(
+  query: string
+): Promise<string[] | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 2500);
+  try {
+    const res = await fetch(
+      "https://api.github.com/search/repositories?q=" +
+        encodeURIComponent(query) +
+        "&per_page=5",
+      {
+        signal: controller.signal,
+        headers: {
+          Accept: "application/vnd.github+json",
+          "User-Agent": "Bunny",
+        },
+      }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      items?: { full_name?: string }[];
+    };
+    const names = (data.items ?? [])
+      .map((item) => item.full_name)
+      .filter((name): name is string => typeof name === "string");
+    return names.slice(0, 5);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// Yahoo Finance symbol search, no key. Returns ticker symbols ("META").
+async function fetchYahooFinanceSuggestions(
+  query: string
+): Promise<string[] | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 2500);
+  try {
+    const res = await fetch(
+      "https://query2.finance.yahoo.com/v1/finance/search?q=" +
+        encodeURIComponent(query) +
+        "&quotesCount=5&newsCount=0",
+      {
+        signal: controller.signal,
+        headers: { "User-Agent": "Mozilla/5.0 (Bunny)" },
+      }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      quotes?: { symbol?: string }[];
+    };
+    const symbols = [...new Set(
+      (data.quotes ?? [])
+        .map((quote) => quote.symbol)
+        .filter((symbol): symbol is string => typeof symbol === "string")
+    )];
+    return symbols.slice(0, 5);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchSuggestionsForCommand(
+  token: string,
+  rest: string
+): Promise<string[]> {
+  const provider = suggestProviders[token.toLowerCase()] ?? "google";
+  if (provider === "youtube") {
+    return fetchGoogleSuggestions(rest, "yt");
+  }
+  if (provider === "github") {
+    const repos = await fetchGitHubSuggestions(rest);
+    if (repos !== null) return repos;
+    return fetchGoogleSuggestions(rest);
+  }
+  if (provider === "yahoo") {
+    const symbols = await fetchYahooFinanceSuggestions(rest);
+    if (symbols !== null) return symbols;
+    return fetchGoogleSuggestions(rest);
+  }
+  return fetchGoogleSuggestions(rest);
 }
 
 export default async function handler(
@@ -115,12 +230,13 @@ export default async function handler(
     return res.status(200).json([q, suggestions]);
   }
 
-  // "<command> <rest>": suggest for <rest>, put the command back on.
+  // "<command> <rest>": suggest for <rest> from that command's
+  // provider, put the command back on.
   const first = trimmed.slice(0, spaceIndex);
   const rest = trimmed.slice(spaceIndex).trim();
   const command = commandTokens.get(first.toLowerCase());
   if (command?.takesQuery && rest) {
-    const suggestions = await fetchGoogleSuggestions(rest);
+    const suggestions = await fetchSuggestionsForCommand(first, rest);
     return res.status(200).json([
       q,
       suggestions.map((s) => `${first} ${s}`),
