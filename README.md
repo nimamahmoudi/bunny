@@ -33,6 +33,12 @@ Below is a list of currently supported commands and their functions:
 - `github`, `gh [query]`: Redirects to GitHub search with the provided query.
 - `github`, `gh`: Opens GitHub main page.
 - `ws`: Opens Wealthsimple main page.
+- `gf`, `gfin [symbol]`: Redirects to the Google Finance quote for the symbol (e.g. `gf META`, `gf T.TO`).
+- `gf`, `gfin`: Opens Google Finance main page.
+- `muse`, `mimi [prompt]`: Opens Muse (muse.ai) with the prompt, e.g. `muse what is XEQT?`. Muse's site preserves the `?q=` parameter, so the prompt should pre-fill when you are signed in.
+- `muse`, `mimi`: Opens Muse.
+- `yf [symbol]`: Redirects to Yahoo Finance for the provided symbol.
+- `ls`: Shows a visual list of all commands at `/commands`.
 - `$`: Opens Google Finance page for Meta's stock price (as an example, adjust as needed).
 - DEFAULT: Uses Google search as the default search engine for any unhandled input.
 
@@ -59,14 +65,15 @@ This will allow you to use Bunny commands directly from your address bar by typi
 
 Bunny now offers search suggestions as you type, in the address bar and on the homepage.
 
-- `GET /api/suggest?q=...` returns OpenSearch suggestions JSON: `[query, [suggestion, ...]]`. It is command-aware: suggestions come from the platform the command searches, not always Google. Plain queries and `g` use Google Suggest; `yt` uses YouTube suggestions; `gh` uses GitHub repo search; `yf` uses Yahoo Finance symbol search. Typing just `g` offers the matching commands.
+- `GET /api/suggest?q=...` returns OpenSearch suggestions JSON: `[query, [suggestion, ...]]`. It is command-aware: suggestions come from the platform the command searches, not always Google. Plain queries and `g` use Google Suggest; `yt` uses YouTube suggestions; `gh` uses GitHub repo search; `yf` uses Yahoo Finance symbol search; `gf` uses Google Finance symbols (`META:NASDAQ`, `XEQT:TSE`), converted from Yahoo's symbol search — Google Finance has no public suggest API (client=finance returns 400, ds=fin returns nothing), and its quote pages need `<TICKER>:<EXCHANGE>`: a bare `META` or a Yahoo-style `XEQT.TO` shows a generic page, so the exchange is resolved and the symbol converted (see `src/lib/googleFinance.ts`). Typing just `g` offers the matching commands.
 - `public/opensearch.xml` advertises Bunny to the browser, with the search URL and the suggestions URL. The homepage links to it with `<link rel="search">`.
+- `ls` now opens a visual list of all commands at `/commands`, grouped by Search / Finance / Open, with a filter box — instead of returning plain text.
 
 Some commands have no public, unauthenticated suggest API, so they fall back to Google for now: `tw` (X's typeahead returns 403 without auth), `r` (Reddit blocks datacenter IPs), and `fb` (no suggest endpoint). No keys are used anywhere — Bunny is public, so a provider that needs a key is not an option.
 
 Chrome's manual "add search engine" screen has no field for a suggestion URL, so after deploying this, re-add Bunny for the omnibox suggestions to take effect: in `chrome://settings/searchEngines` remove the old Bunny entry, visit https://bunny.nima-dev.com (Chrome should pick it up from the OpenSearch file), then set it as default again. The homepage search box works regardless, with no browser setup.
 
-Note: suggestions send each keystroke to the suggestion provider for the command you typed (Google for plain/`g` searches, YouTube for `yt`, GitHub for `gh`, Yahoo Finance for `yf`).
+Note: suggestions send each keystroke to the suggestion provider for the command you typed (Google for plain/`g` searches, YouTube for `yt`, GitHub for `gh`, Yahoo Finance for `yf` and `gf`).
 
 ## Contributing
 

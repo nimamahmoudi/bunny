@@ -1,9 +1,16 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import regexCommandsData from '@/lib/regexCommands.json'; // Adjust the path as necessary
+import { toGoogleFinanceSymbol } from '@/lib/googleFinance';
 
 type FunctionCommand = {
   matcher: RegExp;
-  action: (req: NextApiRequest, res: NextApiResponse, matches: RegExpMatchArray) => void;
+  // May be async (gf resolves the exchange via Yahoo first) and may
+  // return the response object from res.redirect.
+  action: (
+    req: NextApiRequest,
+    res: NextApiResponse,
+    matches: RegExpMatchArray
+  ) => unknown;
   description: string;
 };
 
@@ -20,18 +27,8 @@ type RegexCommand = {
   description: string;
 };
 
-interface CommandItem {
-  matcher: RegExp;
-}
-
 const encodeForSearch = (query: string) => {
   return query.replace(/\s/g, '+')
-}
-
-const getCommandFromMatcher = (item: CommandItem) => {
-  const commandNameMatch = item.matcher.toString().match(/\(([^)]+)\)/);
-  const commandName = commandNameMatch ? commandNameMatch[1] : 'Unknown Command';
-  return commandName
 }
 
 // Convert JSON data into usable commands
@@ -62,14 +59,87 @@ const regexCommands: RegexCommand[] = Object.entries(regexCommandsData).map(([na
 const functionCommands: FunctionCommand[] = [
   {
     matcher: /^(ls|list)$/,
-    action: (req, res, matches) => {
-      const commandsList = [
-        ...functionCommands.map(cmd => `${getCommandFromMatcher(cmd)} : ${cmd.matcher.toString()} : ${cmd.description}`),
-        ...regexCommands.map(cmd => `${getCommandFromMatcher(cmd)} : ${cmd.matcher.toString()} : ${cmd.description}`),
-      ].join('\n');
-      res.send(`Available commands:\n${commandsList}`);
+    action: (req, res) => {
+      // Visual list of all commands, not plain text.
+      return res.redirect(307, "/commands");
     },
     description: "Lists all available commands and their descriptions.",
+  },
+  {
+    // Google Finance. This runs before the regexCommands entries for
+    // gf/gfin, because a Google Finance quote URL needs an exchange
+    // ("META:NASDAQ", "XEQT:TSE") and a bare ticker or a Yahoo-style
+    // suffix ("XEQT.TO") does not resolve: "/quote/META" and
+    // "/quote/XEQT.TO" both show a generic page. So:
+    // - "gf" alone -> Google Finance home.
+    // - "gf META:NASDAQ" / "gf XEQT.TO" -> converted directly.
+    // - "gf meta" / "gf xeqt" / "gf apple" -> resolved via Yahoo
+    //   Finance symbol search (no key), which gives the exchange.
+    // If that lookup fails, fall back to the bare uppercased symbol.
+    matcher: /^(gf|gfin)(?:\s+(.*))?$/,
+    action: async (req, res, matches) => {
+      const query = (matches[2] ?? "").trim();
+      if (!query) {
+        return res.redirect(307, "https://www.google.com/finance/");
+      }
+      const direct = toGoogleFinanceSymbol(query);
+      if (direct) {
+        return res.redirect(
+          307,
+          `https://www.google.com/finance/quote/${direct}`
+        );
+      }
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2500);
+      try {
+        const r = await fetch(
+          "https://query2.finance.yahoo.com/v1/finance/search?q=" +
+            encodeURIComponent(query) +
+            "&quotesCount=5&newsCount=0",
+          {
+            signal: controller.signal,
+            headers: { "User-Agent": "Mozilla/5.0 (Bunny)" },
+          }
+        );
+        if (r.ok) {
+          const data = (await r.json()) as {
+            quotes?: {
+              symbol?: string;
+              exchange?: string;
+              quoteType?: string;
+            }[];
+          };
+          for (const quote of data.quotes ?? []) {
+            if (
+              quote.quoteType !== "EQUITY" &&
+              quote.quoteType !== "ETF"
+            ) {
+              continue;
+            }
+            const converted = quote.symbol
+              ? toGoogleFinanceSymbol(quote.symbol, quote.exchange)
+              : null;
+            if (converted) {
+              return res.redirect(
+                307,
+                `https://www.google.com/finance/quote/${converted}`
+              );
+            }
+          }
+        }
+      } catch {
+        // Fall through to the best-effort redirect below.
+      } finally {
+        clearTimeout(timeout);
+      }
+      return res.redirect(
+        307,
+        `https://www.google.com/finance/quote/${encodeURIComponent(
+          query.toUpperCase()
+        )}`
+      );
+    },
+    description: "Redirects to Google Finance quote for the provided symbol.",
   },
   // Add more function commands as needed
 ];

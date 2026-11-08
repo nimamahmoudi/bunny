@@ -129,6 +129,26 @@
     "targetTemplate": "https://ca.finance.yahoo.com/",
     "description": "Redirects to Yahoo Finance Home Page."
   },
+  "GoogleFinanceSearch": {
+    "pattern": "^(gf|gfin)\\s(.*)$",
+    "targetTemplate": "https://www.google.com/finance/quote/$1",
+    "description": "Redirects to Google Finance quote for the provided symbol. The exchange is resolved first (see the gf function command in src/pages/api/search.ts), because Google Finance needs TICKER:EXCHANGE."
+  },
+  "GoogleFinanceLanding": {
+    "pattern": "^(gf|gfin)$",
+    "targetTemplate": "https://www.google.com/finance/",
+    "description": "Opens Google Finance main page."
+  },
+  "MuseSearch": {
+    "pattern": "^(muse|mimi)\\s(.*)$",
+    "targetTemplate": "https://muse.ai/?q=$1",
+    "description": "Opens Muse with the provided prompt."
+  },
+  "MuseLanding": {
+    "pattern": "^(muse|mimi)$",
+    "targetTemplate": "https://muse.ai/",
+    "description": "Opens Muse, your personal AI agent."
+  },
   "PerPlexityAI": {
     "pattern": "^\\b(ww)\\b\\s*(.*)$",
     "targetTemplate": "https://www.perplexity.ai/search?q=$1&focus=internet",
