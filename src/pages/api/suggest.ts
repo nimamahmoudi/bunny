@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import regexCommandsData from "@/lib/regexCommands.json";
+import { toGoogleFinanceSymbol } from "@/lib/googleFinance";
 
 /**
  * Autocomplete for Bunny.
@@ -16,6 +17,12 @@ import regexCommandsData from "@/lib/regexCommands.json";
  * - `yt` -> YouTube suggestions (Google Suggest with ds=yt)
  * - `gh` / `github` -> GitHub repo search (full names, e.g. facebook/react)
  * - `yf` -> Yahoo Finance symbol search (e.g. META, AAPL)
+ * - `gf` / `gfin` -> Google Finance symbols (e.g. META:NASDAQ,
+ *   XEQT:TSE), converted from Yahoo's symbol search — Google Finance
+ *   has no public suggest API (client=finance returns 400, ds=fin
+ *   returns nothing), and its quote pages need "<TICKER>:<EXCHANGE>":
+ *   a bare "META" or a Yahoo-style "XEQT.TO" shows a generic page.
+ *   See src/lib/googleFinance.ts for the conversion.
  * - everything else (`fb`, `r`, `tw`, `ww`, `qq`, `cc`, `aa`) -> Google
  *   as a fallback. Those platforms have no public, unauthenticated
  *   suggest API: X's typeahead returns 403 without auth, Reddit
@@ -60,7 +67,7 @@ for (const cmd of Object.values(regexCommandsData) as RegexCommandRaw[]) {
 
 // Which provider serves each query-taking command. Anything not listed
 // here falls back to Google (see the header comment for why).
-type SuggestProvider = "google" | "youtube" | "github" | "yahoo";
+type SuggestProvider = "google" | "youtube" | "github" | "yahoo" | "googlefinance";
 const suggestProviders: Record<string, SuggestProvider> = {
   g: "google",
   goog: "google",
@@ -69,6 +76,8 @@ const suggestProviders: Record<string, SuggestProvider> = {
   gh: "github",
   github: "github",
   yf: "yahoo",
+  gf: "googlefinance",
+  gfin: "googlefinance",
 };
 
 async function fetchGoogleSuggestions(
@@ -137,10 +146,20 @@ async function fetchGitHubSuggestions(
   }
 }
 
-// Yahoo Finance symbol search, no key. Returns ticker symbols ("META").
-async function fetchYahooFinanceSuggestions(
+// Yahoo Finance symbol search, no key. Returns the raw quotes
+// (symbol, exchange, quote type) so callers can use them as Yahoo
+// symbols (yf) or convert them to Google Finance symbols (gf).
+// Returns null on failure / rate limit so the caller can fall back
+// to Google instead of showing nothing.
+type YahooQuote = {
+  symbol?: string;
+  exchange?: string;
+  quoteType?: string;
+};
+
+async function fetchYahooFinanceQuotes(
   query: string
-): Promise<string[] | null> {
+): Promise<YahooQuote[] | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 2500);
   try {
@@ -155,19 +174,52 @@ async function fetchYahooFinanceSuggestions(
     );
     if (!res.ok) return null;
     const data = (await res.json()) as {
-      quotes?: { symbol?: string }[];
+      quotes?: YahooQuote[];
     };
-    const symbols = [...new Set(
-      (data.quotes ?? [])
-        .map((quote) => quote.symbol)
-        .filter((symbol): symbol is string => typeof symbol === "string")
-    )];
-    return symbols.slice(0, 5);
+    return data.quotes ?? [];
   } catch {
     return null;
   } finally {
     clearTimeout(timeout);
   }
+}
+
+// Yahoo Finance symbol search, no key. Returns ticker symbols ("META").
+async function fetchYahooFinanceSuggestions(
+  query: string
+): Promise<string[] | null> {
+  const quotes = await fetchYahooFinanceQuotes(query);
+  if (quotes === null) return null;
+  const symbols = [...new Set(
+    quotes
+      .map((quote) => quote.symbol)
+      .filter((symbol): symbol is string => typeof symbol === "string")
+  )];
+  return symbols.slice(0, 5);
+}
+
+// Google Finance symbol search, via Yahoo's symbol search converted
+// to Google format ("META:NASDAQ", "XEQT:TSE"). Futures, currencies
+// and indices have no Google Finance quote form and are skipped.
+async function fetchGoogleFinanceSuggestions(
+  query: string
+): Promise<string[] | null> {
+  const quotes = await fetchYahooFinanceQuotes(query);
+  if (quotes === null) return null;
+  const symbols = [...new Set(
+    quotes
+      .filter(
+        (quote) =>
+          quote.quoteType === "EQUITY" || quote.quoteType === "ETF"
+      )
+      .map((quote) =>
+        quote.symbol
+          ? toGoogleFinanceSymbol(quote.symbol, quote.exchange)
+          : null
+      )
+      .filter((symbol): symbol is string => symbol !== null)
+  )];
+  return symbols.slice(0, 5);
 }
 
 async function fetchSuggestionsForCommand(
@@ -185,6 +237,11 @@ async function fetchSuggestionsForCommand(
   }
   if (provider === "yahoo") {
     const symbols = await fetchYahooFinanceSuggestions(rest);
+    if (symbols !== null) return symbols;
+    return fetchGoogleSuggestions(rest);
+  }
+  if (provider === "googlefinance") {
+    const symbols = await fetchGoogleFinanceSuggestions(rest);
     if (symbols !== null) return symbols;
     return fetchGoogleSuggestions(rest);
   }
