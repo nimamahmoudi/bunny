@@ -55,6 +55,16 @@ To make Bunny even more accessible, you can set it as your default search engine
 
 This will allow you to use Bunny commands directly from your address bar by typing your chosen keyword followed by a space and then your command.
 
+## Autocomplete
+
+Bunny now offers search suggestions as you type, in the address bar and on the homepage.
+
+- `GET /api/suggest?q=...` returns OpenSearch suggestions JSON: `[query, [suggestion, ...]]`. It proxies Google Suggest (no API key) and is command-aware: `g weather tor` suggests `g weather toronto`, `yt cats` suggests `yt cats funny`, and typing just `g` offers the matching commands.
+- `public/opensearch.xml` advertises Bunny to the browser, with the search URL and the suggestions URL. The homepage links to it with `<link rel="search">`.
+
+Chrome's manual "add search engine" screen has no field for a suggestion URL, so after deploying this, re-add Bunny for the omnibox suggestions to take effect: in `chrome://settings/searchEngines` remove the old Bunny entry, visit https://bunny.nima-dev.com (Chrome should pick it up from the OpenSearch file), then set it as default again. The homepage search box works regardless, with no browser setup.
+
+Note: suggestions send each keystroke to Google Suggest, the same place Bunny's default search already goes to.
 
 ## Contributing
 
