@@ -59,12 +59,14 @@ This will allow you to use Bunny commands directly from your address bar by typi
 
 Bunny now offers search suggestions as you type, in the address bar and on the homepage.
 
-- `GET /api/suggest?q=...` returns OpenSearch suggestions JSON: `[query, [suggestion, ...]]`. It proxies Google Suggest (no API key) and is command-aware: `g weather tor` suggests `g weather toronto`, `yt cats` suggests `yt cats funny`, and typing just `g` offers the matching commands.
+- `GET /api/suggest?q=...` returns OpenSearch suggestions JSON: `[query, [suggestion, ...]]`. It is command-aware: suggestions come from the platform the command searches, not always Google. Plain queries and `g` use Google Suggest; `yt` uses YouTube suggestions; `gh` uses GitHub repo search; `yf` uses Yahoo Finance symbol search. Typing just `g` offers the matching commands.
 - `public/opensearch.xml` advertises Bunny to the browser, with the search URL and the suggestions URL. The homepage links to it with `<link rel="search">`.
+
+Some commands have no public, unauthenticated suggest API, so they fall back to Google for now: `tw` (X's typeahead returns 403 without auth), `r` (Reddit blocks datacenter IPs), and `fb` (no suggest endpoint). No keys are used anywhere — Bunny is public, so a provider that needs a key is not an option.
 
 Chrome's manual "add search engine" screen has no field for a suggestion URL, so after deploying this, re-add Bunny for the omnibox suggestions to take effect: in `chrome://settings/searchEngines` remove the old Bunny entry, visit https://bunny.nima-dev.com (Chrome should pick it up from the OpenSearch file), then set it as default again. The homepage search box works regardless, with no browser setup.
 
-Note: suggestions send each keystroke to Google Suggest, the same place Bunny's default search already goes to.
+Note: suggestions send each keystroke to the suggestion provider for the command you typed (Google for plain/`g` searches, YouTube for `yt`, GitHub for `gh`, Yahoo Finance for `yf`).
 
 ## Contributing
 
