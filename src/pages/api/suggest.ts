@@ -13,10 +13,12 @@ import { toGoogleFinanceSymbol } from "@/lib/googleFinance";
  * same endpoint.
  *
  * Per-command suggestions, not just Google for everything:
- * - plain query, or `g` / `goog` / `google` -> Google Suggest
+ * - plain query, or `g` / `goog` -> Google Suggest. (`google` is
+ *   deliberately not a command any more: typing "google sheets"
+ *   used to drop the word "google" and search for just "sheets".)
  * - `yt` -> YouTube suggestions (Google Suggest with ds=yt)
  * - `gh` / `github` -> GitHub repo search (full names, e.g. facebook/react)
- * - `yf` -> Yahoo Finance symbol search (e.g. META, AAPL)
+ * - `yf` / `fin` -> Yahoo Finance symbol search (e.g. META, AAPL)
  * - `gf` / `gfin` -> Google Finance symbols (e.g. META:NASDAQ,
  *   XEQT:TSE), converted from Yahoo's symbol search — Google Finance
  *   has no public suggest API (client=finance returns 400, ds=fin
@@ -71,11 +73,11 @@ type SuggestProvider = "google" | "youtube" | "github" | "yahoo" | "googlefinanc
 const suggestProviders: Record<string, SuggestProvider> = {
   g: "google",
   goog: "google",
-  google: "google",
   yt: "youtube",
   gh: "github",
   github: "github",
   yf: "yahoo",
+  fin: "yahoo",
   gf: "googlefinance",
   gfin: "googlefinance",
 };

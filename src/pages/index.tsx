@@ -8,6 +8,7 @@ const QUICK_COMMANDS = [
   { token: "gh ", label: "GitHub" },
   { token: "gf ", label: "Google Finance" },
   { token: "yf ", label: "Yahoo Finance" },
+  { token: "fin ", label: "Financials" },
   { token: "r ", label: "Reddit" },
   { token: "tw ", label: "Twitter" },
   { token: "muse ", label: "Muse" },
@@ -43,6 +44,24 @@ const POPULAR_COMMANDS = [
     name: "Yahoo Finance",
     description: "Stock quotes on Yahoo Finance.",
     example: "yf AAPL",
+  },
+  {
+    token: "fin",
+    name: "Yahoo Financials",
+    description: "Financials for a stock on Yahoo Finance.",
+    example: "fin META",
+  },
+  {
+    token: "tax",
+    name: "Tax calculator",
+    description: "Wealthsimple income tax calculator (Ontario).",
+    example: "tax",
+  },
+  {
+    token: "ci",
+    name: "Compound interest",
+    description: "SEC compound interest calculator.",
+    example: "ci",
   },
   {
     token: "r",

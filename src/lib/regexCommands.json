@@ -1,6 +1,6 @@
 {
   "GoogleSearch": {
-    "pattern": "^(g|goog|google)\\s(.*)$",
+    "pattern": "^(g|goog)\\s(.*)$",
     "targetTemplate": "https://google.com/search?q=$1",
     "description": "Redirects to Google search with the provided query."
   },
@@ -128,6 +128,26 @@
     "pattern": "^(yf)$",
     "targetTemplate": "https://ca.finance.yahoo.com/",
     "description": "Redirects to Yahoo Finance Home Page."
+  },
+  "YahooFinanceFinancials": {
+    "pattern": "^(fin)\\s(.*)$",
+    "targetTemplate": "https://finance.yahoo.com/quote/$1/financials/",
+    "description": "Redirects to Yahoo Finance financials for the provided symbol."
+  },
+  "YahooFinanceFinancialsLanding": {
+    "pattern": "^(fin)$",
+    "targetTemplate": "https://finance.yahoo.com/",
+    "description": "Opens Yahoo Finance main page."
+  },
+  "WealthsimpleTaxCalculator": {
+    "pattern": "^(tax|taxcalc)$",
+    "targetTemplate": "https://www.wealthsimple.com/en-ca/tool/tax-calculator/ontario",
+    "description": "Opens Wealthsimple's income tax calculator for Ontario."
+  },
+  "CompoundInterestCalculator": {
+    "pattern": "^(ci|compound)$",
+    "targetTemplate": "https://www.investor.gov/financial-tools-calculators/calculators/compound-interest-calculator",
+    "description": "Opens the SEC compound interest calculator."
   },
   "GoogleFinanceSearch": {
     "pattern": "^(gf|gfin)\\s(.*)$",
