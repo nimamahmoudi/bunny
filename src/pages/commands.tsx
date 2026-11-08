@@ -34,6 +34,7 @@ const SEARCH_NAMES = new Set([
 const FINANCE_NAMES = new Set([
   "GoogleFinanceSearch",
   "YahooFinance",
+  "YahooFinanceFinancials",
   "MetaStock",
   "TELUSStock",
 ]);
